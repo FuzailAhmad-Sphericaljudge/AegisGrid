@@ -1,0 +1,30 @@
+{
+  "source": "AegisGrid_Hackathon_Deck.pptx",
+  "source_slides_reviewed": 10,
+  "deck_flow_implemented": [
+    "Understand",
+    "Detect",
+    "Assess",
+    "Contain",
+    "Recover"
+  ],
+  "features_added": [
+    "JWT authentication",
+    "Cross-sector graph",
+    "Contextual risk engine",
+    "Threat queue",
+    "What-if response simulation",
+    "Recovery dashboard",
+    "AI Security Copilot",
+    "Local AI fallback",
+    "Optional LLM mode",
+    "Responsive dashboard",
+    "Docker setup"
+  ],
+  "innovations": [
+    "Cross-sector blast-radius visualization",
+    "AI explanations grounded in live simulated dashboard state",
+    "Simulation-safe response comparison",
+    "Recovery-aware containment framing"
+  ]
+}
