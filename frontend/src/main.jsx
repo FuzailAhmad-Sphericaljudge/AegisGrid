@@ -5,20 +5,8 @@ import {Shield,Activity,Network,Bot,LogOut,ChevronRight,AlertTriangle,CheckCircl
 import {AreaChart,Area,ResponsiveContainer,XAxis,YAxis,Tooltip} from "recharts";
 import "./styles.css";
 
-const api=axios.create({baseURL:import.meta.env.VITE_API_URL || "http://localhost:8000/api"});
+const api=axios.create({baseURL:import.meta.env.VITE_API_URL || "/api"});
 api.interceptors.request.use(c=>{const t=localStorage.getItem("aegis_token");c.headers = c.headers || {}; if(t){c.headers.Authorization=`Bearer ${t}`;} return c;});
-
-function Login({done}){
- const [mode,setMode]=useState("login"),[email,setEmail]=useState("demo@aegisgrid.local"),[password,setPassword]=useState("AegisGrid123!"),[error,setError]=useState("");
- async function submit(e){e.preventDefault();setError("");try{const r=await api.post("/auth/"+mode,{email,password});localStorage.setItem("aegis_token",r.data.access_token);done()}catch(x){setError(x.response?.data?.detail||"Authentication failed")}}
- return <div className="auth"><div className="orb"></div><div className="auth-card">
-   <div className="brand"><div className="mark"><Shield/></div><div><b>AEGIS<span>GRID</span></b><small>CYBER-RESILIENCE CONTROL PLANE</small></div></div>
-   <div className="auth-title"><h1>{mode==="login"?"Welcome back":"Create analyst account"}</h1><p>Understand risk before it becomes impact.</p></div>
-   <form onSubmit={submit}><label>Email<input value={email} onChange={e=>setEmail(e.target.value)} type="email"/></label><label>Password<input value={password} onChange={e=>setPassword(e.target.value)} type="password"/></label>{error&&<div className="error">{error}</div>}<button className="primary">{mode==="login"?"Enter AegisGrid":"Create account"}<ChevronRight size={18}/></button></form>
-   <button className="link" onClick={()=>setMode(mode==="login"?"register":"login")}>{mode==="login"?"Need an account? Register":"Already have an account? Sign in"}</button>
-   <div className="demo">Demo credentials are prefilled for the hackathon prototype.</div>
- </div></div>
-}
 
 function Stat({label,value,icon:Icon,tone}){return <div className="stat"><div className={"stat-icon "+tone}><Icon size={19}/></div><div><span>{label}</span><strong>{value}</strong></div></div>}
 
@@ -125,8 +113,7 @@ function App(){
  if(!overview)return <div className="loading"><Shield/>Loading resilience model…</div>;
  if(showProfileCompletion)return <ProfileCompletion user={user} onComplete={()=>{setShowProfileCompletion(false);load();}}/>;
  const simulate=async action=>setSimulation((await api.post("/simulate",{threat_id:selectedThreat,action})).data);
- const logout=()=>{localStorage.removeItem("aegis_token");location.reload()};
- return <div className="app"><aside><div className="side-brand"><div className="mark"><Shield/></div><div><b>AEGIS<span>GRID</span></b><small>RESILIENCE OS</small></div></div><nav>{[["overview","Overview",Activity],["infrastructure","Infrastructure",Network],["incidents","Incidents",AlertTriangle],["recovery","Recovery",RefreshCw],["ai-agents","AI Agents",Brain],["copilot","AI Chat",Bot],["profile","Profile",Settings],["devices","Devices",Smartphone],["audit","Audit Log",FileText]].map(([id,label,I])=><button className={tab===id?"active":""} onClick={()=>setTab(id)} key={id}><I size={18}/>{label}</button>)}</nav><div className="side-bottom"><Notifications/><span className="online">● Simulation environment online</span><button onClick={logout}><LogOut size={16}/>Sign out</button></div></aside>
+ return <div className="app"><aside><div className="side-brand"><div className="mark"><Shield/></div><div><b>AEGIS<span>GRID</span></b><small>RESILIENCE OS</small></div></div><nav>{[["overview","Overview",Activity],["infrastructure","Infrastructure",Network],["incidents","Incidents",AlertTriangle],["recovery","Recovery",RefreshCw],["ai-agents","AI Agents",Brain],["copilot","AI Chat",Bot],["profile","Profile",Settings],["devices","Devices",Smartphone],["audit","Audit Log",FileText]].map(([id,label,I])=><button className={tab===id?"active":""} onClick={()=>setTab(id)} key={id}><I size={18}/>{label}</button>)}</nav><div className="side-bottom"><Notifications/><span className="online">● Simulation environment online</span></div></aside>
  <main><header><div><span className="eyebrow">CRITICAL INFRASTRUCTURE / CONTROL ROOM</span><h1>{tab==="overview"?"Resilience Overview":tab==="ai-agents"?"AI Security Agents":tab==="profile"?"User Profile":tab==="devices"?"Devices & Sessions":tab==="audit"?"Audit Log":tab==="copilot"?"AI Assistant":tab[0].toUpperCase()+tab.slice(1)}</h1></div><div className="header-actions"><span className="live">● LIVE SIMULATION</span><button className="icon" onClick={load}><RefreshCw size={16}/></button></div></header>
  {tab==="overview"&&<section><div className="stats"><Stat label="Network risk" value={Math.round(overview.risk)+"/100"} icon={Shield} tone="red"/><Stat label="Active threats" value={overview.threats} icon={AlertTriangle} tone="orange"/><Stat label="Critical assets" value={overview.critical_assets} icon={Database} tone="purple"/><Stat label="Sectors connected" value={overview.sectors.length} icon={Network} tone="blue"/></div>
  <div className="cols"><div className="panel"><div className="panel-head"><div><span className="kicker">LIVE INFRASTRUCTURE MODEL</span><h2>Cross-sector attack surface</h2></div><span className="risk">RISK {Math.round(overview.risk)}</span></div><Graph data={graph}/></div>
@@ -144,4 +131,10 @@ function App(){
  {tab==="audit"&&<AuditLogs/>}
  </main></div>
 }
-createRoot(document.getElementById("root")).render(localStorage.getItem("aegis_token")?<App/>:<Login done={()=>location.reload()}/>);
+function DirectEntry(){
+ const [ready,setReady]=useState(false),[error,setError]=useState("");
+ useEffect(()=>{api.post("/demo-session").then(r=>{localStorage.setItem("aegis_token",r.data.access_token);setReady(true);}).catch(()=>setError("Unable to start the demo session. Check that the API is running."));},[]);
+ if(error)return <div className="loading"><Shield/>{error}</div>;
+ return ready?<App/>:<div className="loading"><Shield/>Starting resilience model…</div>;
+}
+createRoot(document.getElementById("root")).render(<DirectEntry/>);

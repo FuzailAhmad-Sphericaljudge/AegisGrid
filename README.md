@@ -6,7 +6,7 @@ This implementation expands the supplied 10-slide concept into a runnable full-s
 **Understand → Detect → Assess → Contain → Recover**
 
 ## Major features
-- Secure-looking login/register flow with JWT authentication
+- Direct-entry dashboard for the built-in demo user (no authentication page)
 - Executive dashboard with network risk, threats, critical assets and sectors
 - Interactive cross-sector infrastructure graph
 - Attack-path analysis
@@ -53,9 +53,9 @@ npm run dev
 Open:
 http://localhost:5173
 
-Demo:
-- Email: demo@aegisgrid.local
-- Password: AegisGrid123!
+The dashboard opens directly into the built-in demo session. The legacy JWT
+authentication endpoints remain available for API testing, but the UI no longer
+exposes login or registration.
 
 ### Optional LLM mode
 Copy `backend/.env.example` to `backend/.env` and set:

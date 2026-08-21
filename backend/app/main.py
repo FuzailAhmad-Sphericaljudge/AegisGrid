@@ -32,6 +32,14 @@ def startup():
 def health():
     return {"status": "ok"}
 
+@app.post("/api/demo-session")
+def demo_session(db: Session = Depends(get_db)):
+    """Create the built-in demo session used by the direct-entry dashboard."""
+    user = db.query(User).filter(User.email == "demo@aegisgrid.local").first()
+    if not user:
+        raise HTTPException(503, "Demo user is not available")
+    return {"access_token": create_token(user), "token_type": "bearer"}
+
 @app.post("/api/auth/register")
 def register(body: RegisterIn, db: Session = Depends(get_db)):
     email = body.email.strip().lower()

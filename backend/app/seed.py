@@ -15,8 +15,11 @@ def seed(db):
         demo_user.last_name = "User"
         demo_user.profile_complete = True
 
-    if db.query(User).count() == 0:
-        db.add(User(email=demo_email, password_hash=hash_password(demo_password), role="admin", first_name="Demo", last_name="User", profile_complete=True))
+    # The infrastructure dataset is fixed for this prototype. Do not insert it
+    # again when the server restarts against an existing SQLite database.
+    if db.query(Asset).count() > 0:
+        db.commit()
+        return
 
     assets = [
         Asset(id=1,name="Nurse Station PC",sector="Hospital",asset_type="Endpoint",criticality=55,vulnerability=72,exposure=65,behavioral=80,status="compromised"),
