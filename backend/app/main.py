@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from .database import init_db, get_db, SessionLocal
 from .models import User, Asset, Threat, Recovery, Connection, Device, AuditLog, Notification
-from .schemas import RegisterIn, LoginIn, ChatIn, SimulateIn, ThreatAnalysisIn, UpdateProfileIn, CompleteProfileIn, DeviceOut, AuditLogOut, NotificationOut
+from .schemas import RegisterIn, LoginIn, ChatIn, SimulateIn, ThreatAnalysisIn, RecoveryUpdateIn, UpdateProfileIn, CompleteProfileIn, DeviceOut, AuditLogOut, NotificationOut
 from .auth import hash_password, verify_password, create_token, current_user
 from .seed import seed
 from .risk import asset_risk, attack_path, network_score
@@ -142,11 +142,32 @@ def get_attack_path(source_id: int, target_id: int, db: Session = Depends(get_db
 
 @app.get("/api/recovery")
 def recovery(db: Session = Depends(get_db), user=Depends(current_user)):
-    return [
-        {"id":r.id,"asset_id":r.asset_id,"service":r.service,"progress":r.progress,
-         "status":r.status,"eta_minutes":r.eta_minutes}
-        for r in db.query(Recovery).all()
-    ]
+    records = []
+    for item in db.query(Recovery).all():
+        asset = db.get(Asset, item.asset_id)
+        records.append({
+            "id": item.id, "asset_id": item.asset_id, "service": item.service,
+            "progress": item.progress, "status": item.status,
+            "eta_minutes": item.eta_minutes,
+            "sector": asset.sector if asset else "Unknown",
+            "criticality": asset.criticality if asset else 0,
+            "asset_status": asset.status if asset else "unknown",
+            "priority": round((asset.criticality if asset else 0) * (1 - item.progress / 100), 1)
+        })
+    return sorted(records, key=lambda item: item["priority"], reverse=True)
+
+
+@app.patch("/api/recovery/{recovery_id}")
+def update_recovery(recovery_id: int, body: RecoveryUpdateIn, user=Depends(current_user), db: Session = Depends(get_db)):
+    item = db.get(Recovery, recovery_id)
+    if not item:
+        raise HTTPException(404, "Recovery item not found")
+    item.progress = body.progress
+    item.status = body.status or ("healthy" if body.progress == 100 else "in_progress")
+    item.eta_minutes = 0 if item.progress == 100 else max(5, round((100 - item.progress) / 2))
+    db.commit()
+    log_audit(db, user.id, "recovery_progress_updated", "Recovery", recovery_id)
+    return {"id": item.id, "progress": item.progress, "status": item.status, "eta_minutes": item.eta_minutes}
 
 @app.post("/api/simulate")
 def simulate(body: SimulateIn, db: Session = Depends(get_db), user=Depends(current_user)):
@@ -157,17 +178,37 @@ def simulate(body: SimulateIn, db: Session = Depends(get_db), user=Depends(curre
         "isolate_endpoint": {
             "security_benefit":"High","operational_impact":"Low",
             "blocked_probability":92,
+            "risk_reduction":28,
+            "next_step":"Collect endpoint evidence and rotate exposed credentials.",
             "summary":"Breaks the simulated lateral-movement path at the entry endpoint."
         },
         "restrict_admin": {
             "security_benefit":"Medium","operational_impact":"Medium",
             "blocked_probability":68,
+            "risk_reduction":16,
+            "next_step":"Review privileged access logs and confirm an approved administrator.",
             "summary":"Slows the path while preserving most endpoint availability."
         },
         "shutdown_database": {
             "security_benefit":"High","operational_impact":"High",
             "blocked_probability":99,
+            "risk_reduction":38,
+            "next_step":"Validate backup integrity before beginning controlled restoration.",
             "summary":"Stops downstream access but disrupts critical records availability."
+        },
+        "segment_sector": {
+            "security_benefit":"High","operational_impact":"Medium",
+            "blocked_probability":86,
+            "risk_reduction":24,
+            "next_step":"Verify required service links and monitor denied traffic.",
+            "summary":"Contains the incident to the affected sector while preserving essential services."
+        },
+        "increase_monitoring": {
+            "security_benefit":"Low","operational_impact":"Low",
+            "blocked_probability":34,
+            "risk_reduction":8,
+            "next_step":"Escalate to containment if suspicious activity increases.",
+            "summary":"Adds visibility and evidence collection without interrupting service availability."
         }
     }
     if body.action not in choices:

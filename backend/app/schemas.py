@@ -42,6 +42,11 @@ class SimulateIn(BaseModel):
     threat_id: int
     action: str
 
+
+class RecoveryUpdateIn(BaseModel):
+    progress: int = Field(ge=0, le=100)
+    status: str | None = None
+
 class ThreatAnalysisIn(BaseModel):
     threat_id: int
 

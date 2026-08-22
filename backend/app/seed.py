@@ -15,9 +15,21 @@ def seed(db):
         demo_user.last_name = "User"
         demo_user.profile_complete = True
 
-    # The infrastructure dataset is fixed for this prototype. Do not insert it
-    # again when the server restarts against an existing SQLite database.
+    # Keep the fixed infrastructure dataset stable, while allowing recovery
+    # examples to be added when an existing database predates them.
     if db.query(Asset).count() > 0:
+        existing_services = {item.service for item in db.query(Recovery).all()}
+        db.add_all([
+            Recovery(asset_id=5, service="Water SCADA Gateway", progress=84, status="protected", eta_minutes=8),
+            Recovery(asset_id=6, service="Power Control Server", progress=48, status="in_progress", eta_minutes=26),
+            Recovery(asset_id=7, service="Emergency Dispatch", progress=100, status="healthy", eta_minutes=0),
+        ] if not existing_services.intersection({"Water SCADA Gateway", "Power Control Server", "Emergency Dispatch"}) else [
+            item for item in [
+                Recovery(asset_id=5, service="Water SCADA Gateway", progress=84, status="protected", eta_minutes=8),
+                Recovery(asset_id=6, service="Power Control Server", progress=48, status="in_progress", eta_minutes=26),
+                Recovery(asset_id=7, service="Emergency Dispatch", progress=100, status="healthy", eta_minutes=0),
+            ] if item.service not in existing_services
+        ])
         db.commit()
         return
 
@@ -53,6 +65,9 @@ def seed(db):
     db.add_all([
         Recovery(id=1,asset_id=1,service="Nurse Station PC",progress=72,status="in_progress",eta_minutes=12),
         Recovery(id=2,asset_id=3,service="Patient Records DB",progress=96,status="protected",eta_minutes=0),
-        Recovery(id=3,asset_id=4,service="Monitoring System",progress=88,status="healthy",eta_minutes=0)
+        Recovery(id=3,asset_id=4,service="Monitoring System",progress=88,status="healthy",eta_minutes=0),
+        Recovery(id=4,asset_id=5,service="Water SCADA Gateway",progress=84,status="protected",eta_minutes=8),
+        Recovery(id=5,asset_id=6,service="Power Control Server",progress=48,status="in_progress",eta_minutes=26),
+        Recovery(id=6,asset_id=7,service="Emergency Dispatch",progress=100,status="healthy",eta_minutes=0)
     ])
     db.commit()

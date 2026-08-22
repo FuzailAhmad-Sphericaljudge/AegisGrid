@@ -4,6 +4,8 @@ import httpx
 SECURITY_PROMPT = (
     "You are AegisGrid Copilot, a defensive cyber-resilience assistant. "
     "The environment is a controlled simulation of critical infrastructure. "
+    "Explain cybersecurity, application security, cloud security, identity, privacy, "
+    "blockchain security, smart contracts, wallets, tokens, consensus and incident response. "
     "Explain risk, attack paths, incident context, response tradeoffs and recovery priorities. "
     "Never claim to have executed an action and never provide instructions for compromising real systems. "
     "Be concise and operationally useful."
@@ -21,12 +23,50 @@ def is_security_question(message):
         "risk", "threat", "attack", "vulnerability", "cyber", "security", "incident",
         "contain", "response", "breach", "malware", "exploit", "path", "recover",
         "sector", "infrastructure", "critical infrastructure", "simulation", "defense",
-        "aegis", "copilot"
+        "aegis", "aegisgrid", "copilot", "project", "system status", "system health", "endpoint", "isolate", "segment", "monitor", "phishing", "ransomware", "firewall", "encryption", "cryptography",
+        "authentication", "authorization", "iam", "zero trust", "soc", "siem", "edr",
+        "cloud security", "application security", "owasp", "devsecops", "privacy",
+        "blockchain", "bitcoin", "ethereum", "crypto", "cryptocurrency", "smart contract",
+        "web3", "wallet", "token", "defi", "dao", "consensus", "51%", "bridge"
     ]
     return any(keyword in message.lower() for keyword in security_keywords)
 
 def local_security_answer(message, context=None):
     m = message.lower()
+    if "what if" in m:
+        if any(x in m for x in ["isolate", "endpoint", "nurse station"]):
+            return "What-if result: isolating the Nurse Station PC has a high security benefit with low operational impact. It is estimated to block 92% of the simulated path and reduce risk by 28 points. Next: preserve evidence, rotate exposed credentials and verify the endpoint before reconnecting it."
+        if any(x in m for x in ["database", "patient records", "shut down"]):
+            return "What-if result: shutting down the Patient Records DB is estimated to block 99% of the simulated path and reduce risk by 38 points, but it has high operational impact. Next: validate backup integrity and confirm service owners before controlled restoration."
+        if any(x in m for x in ["segment", "sector", "network"]):
+            return "What-if result: segmenting the affected sector is estimated to block 86% of the simulated path and reduce risk by 24 points with medium operational impact. Next: verify essential service links and monitor denied traffic."
+        if any(x in m for x in ["monitor", "watch"]):
+            return "What-if result: increasing monitoring preserves availability with low operational impact, but blocks only an estimated 34% of the path and reduces risk by 8 points. Next: escalate to containment if suspicious activity increases."
+        if any(x in m for x in ["smart contract", "blockchain", "wallet", "crypto"]):
+            return "What-if result: deploying or connecting a blockchain system without independent review increases contract, key, oracle and bridge risk. Before proceeding, test access control and reentrancy defenses, use multisignature approvals, verify dependencies and prepare a pause or recovery plan."
+        return "I can run a safe, simulation-only comparison. Ask a specific question such as: What if we isolate the endpoint, segment the sector, shut down the database, increase monitoring, or deploy this smart contract?"
+    if any(x in m for x in ["what is this project", "what is aegisgrid", "about the project", "explain the project"]):
+        return "AegisGrid is a proactive cyber-resilience control plane for connected critical infrastructure. It models Hospital, Power/SCADA, Water and Emergency Services, then helps teams understand exposure, detect threats, assess risk, simulate containment and track recovery. The current environment is a controlled demo, so simulations do not execute real infrastructure actions."
+    if "status" in m or "system health" in m or "is the system" in m:
+        if context:
+            risk = round(context.get("risk", 0))
+            threats = context.get("threats", 0)
+            assets = context.get("critical_assets", "the tracked")
+            sectors = context.get("sectors", "connected")
+            return f"System status: the AegisGrid simulation is online and responding. Current network risk is {risk}/100 with {threats} active or monitored threats, {assets} critical assets and {sectors} connected sectors. Review the incident queue and recovery view for the next actions."
+        return "System status: the AegisGrid simulation is online. I can report risk, active threats, critical assets, connected sectors, incidents and recovery priorities when dashboard context is available."
+    if any(x in m for x in ["blockchain", "bitcoin", "ethereum", "crypto", "cryptocurrency", "web3", "smart contract", "wallet", "token", "defi", "dao", "consensus", "51%", "bridge"]):
+        if "smart contract" in m:
+            return "Smart-contract security depends on access control, input validation, reentrancy protection, safe arithmetic, oracle assumptions and upgrade governance. Use independent review, automated tests, fuzzing and a pause or recovery plan before deployment."
+        if "wallet" in m or "private key" in m:
+            return "Protect wallet keys with hardware-backed storage, least privilege, multisignature approval and transaction simulation. Never share seed phrases or sign requests whose destination, calldata or permissions you cannot verify."
+        if "51%" in m or "consensus" in m:
+            return "A 51% attack is control of enough consensus power to reorganize recent history or censor transactions. It does not automatically let an attacker spend from other users' wallets; confirmations, validator diversity and monitoring reduce the risk."
+        if "bridge" in m:
+            return "Bridges concentrate risk in validators, message verification, upgrade keys and liquidity accounting. Review trust assumptions, rate limits, pause controls, proof verification and independent monitoring before relying on one."
+        if "defi" in m or "dao" in m or "token" in m:
+            return "Assess a blockchain system across contract code, privileged roles, oracle and bridge dependencies, governance capture, key management, economic incentives and operational monitoring. On-chain transparency does not remove implementation risk."
+        return "Blockchain is a replicated, tamper-evident ledger maintained through a consensus mechanism. For security, assess the protocol, smart contracts, keys, wallets, bridges, oracles, governance and the privacy impact of public data."
     if "risk" in m:
         return "Risk is contextual: combine asset criticality, vulnerability, exposure, behavioral signals and reachable attack paths. High-criticality assets reachable from compromised nodes should be prioritized."
     if "contain" in m or "response" in m:
@@ -35,9 +75,23 @@ def local_security_answer(message, context=None):
         return "The primary simulated path is Nurse Station PC → Admin Server → Patient Records DB → Monitoring System. Breaking the path at the endpoint reduces downstream exposure."
     if "recover" in m:
         return "Prioritize recovery by service criticality and dependency. Verify integrity, restore the least-disruptive critical service, then monitor before restoring dependent systems."
+    if "phish" in m:
+        return "Reduce phishing risk with phishing-resistant MFA, secure email controls, attachment and link isolation, user reporting, rapid token revocation and rehearsed response playbooks. Treat unusual login and mailbox-rule changes as high-value signals."
+    if "ransom" in m or "malware" in m:
+        return "For suspected ransomware or malware, isolate affected hosts without destroying evidence, disable compromised accounts, preserve logs, identify the initial access path, validate clean backups and restore in dependency order."
+    if "encrypt" in m or "cryptograph" in m:
+        return "Use well-reviewed modern cryptography, authenticated encryption, managed key rotation and strict key access controls. Encryption in transit and at rest does not replace identity, authorization, logging or endpoint protection."
+    if "zero trust" in m or "iam" in m or "identity" in m or "authentication" in m:
+        return "A strong identity program verifies every request, uses least privilege, phishing-resistant MFA, short-lived credentials, device and workload signals, segmentation and continuous audit. Start with privileged and service accounts."
+    if "cloud" in m:
+        return "Cloud security starts with clear shared-responsibility boundaries, least-privilege IAM, hardened images, network segmentation, secret management, centralized logs, secure backups and continuous configuration monitoring."
+    if "owasp" in m or "application security" in m or "devsecops" in m:
+        return "Application security should combine threat modeling, secure defaults, dependency and secret scanning, code review, dynamic testing, strong authorization checks, safe deployment gates and production monitoring."
+    if "firewall" in m or "network" in m:
+        return "Use deny-by-default segmentation, explicit business-justified flows, egress controls, protected management planes, monitored remote access and regular rule review. Network controls should support identity and telemetry rather than stand alone."
     if "sector" in m:
         return "AegisGrid's differentiator is shared context across Hospital, Power/SCADA, Water and Emergency Services instead of isolated alert streams."
-    return "I can explain the current risk, summarize an attack path, compare containment options, prioritize recovery, or explain cross-sector impact."
+    return "I can explain AegisGrid, report simulated system status, answer cybersecurity and blockchain questions, summarize attack paths, compare containment options, prioritize recovery, or explain cross-sector impact."
 
 def local_general_answer(message):
     """Provide general knowledge responses about the world"""
